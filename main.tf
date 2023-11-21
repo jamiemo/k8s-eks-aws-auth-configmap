@@ -13,21 +13,13 @@ data "aws_resourcegroupstaggingapi_resources" "cluster" {
   }
 }
 
-# 2. Get aws-auth config map data source
-data "kubernetes_config_map" "aws_auth" {
-  metadata {
-    name = "aws-auth"
-    namespace = "kube-system"
-  }
-}
-
-# 3. Extract cluster name
+# 2. Extract cluster name
 locals {
   cluster_arn      = data.aws_resourcegroupstaggingapi_resources.cluster.resource_tag_mapping_list[0].resource_arn
   cluster_name     = regex("^arn:aws:eks:.+:\\d+:cluster\\/(.+)$", local.cluster_arn)[0] 
 }
 
-# 4. Create EKS data sources with cluster name
+# 3. Create EKS data sources with cluster name
 data "aws_eks_cluster" "eks" {
   name = local.cluster_name
 }
@@ -36,14 +28,14 @@ data "aws_eks_cluster_auth" "eks" {
   name = local.cluster_name
 }
 
-# 5. Create kubernetes provider
+# 4. Create kubernetes provider
 provider "kubernetes" {
   host                   = data.aws_eks_cluster.eks.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority.0.data)
   token                  = data.aws_eks_cluster_auth.eks.token
 }
 
-# 6. Create IAM role and policy e.g. codebuild
+# 5. Create IAM role and policy e.g. codebuild
 data "aws_iam_policy_document" "assume_role" {
   statement {
     effect = "Allow"
@@ -62,7 +54,7 @@ resource "aws_iam_role" "service_role" {
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
-# 7. Create servicec role permissions
+# 6. Create servicec role permissions
 locals {
   new_role_yaml = <<-EOF
     - groups:
@@ -70,6 +62,14 @@ locals {
       rolearn: ${aws_iam_role.service_role.arn}
       username: ${aws_iam_role.service_role.name}
     EOF
+}
+
+# 7. Get aws-auth config map data source
+data "kubernetes_config_map" "aws_auth" {
+  metadata {
+    name = "aws-auth"
+    namespace = "kube-system"
+  }
 }
 
 # 8. Update aws-auth configmap
