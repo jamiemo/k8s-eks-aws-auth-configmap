@@ -1,0 +1,1 @@
+# k8s-eks-aws-auth-configmap
