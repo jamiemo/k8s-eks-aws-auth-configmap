@@ -54,7 +54,7 @@ resource "aws_iam_role" "service_role" {
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
-# 6. Create servicec role permissions
+# 6. Create service role permissions
 locals {
   new_role_yaml = <<-EOF
     - groups:
