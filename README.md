@@ -58,3 +58,11 @@ metadata:
   name: aws-auth
   namespace: kube-system
 ```
+
+### Terraform Destroy
+Delete the aws-auth configmap state prior to destroying the deployment, to ensure the destroy is successful without deleting the aws-auth configmap mapRoles.
+
+```bash
+terraform state rm kubernetes_config_map_v1_data.aws_auth
+terraform destroy
+```
